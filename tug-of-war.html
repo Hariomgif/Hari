@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Tug of War</title>
+<style>
+  :root{
+    --field-dark:#16301f;
+    --field-mid:#1f4029;
+    --line:#f2e8cf;
+    --sand:#f2e8cf;
+    --blue:#2f6fa8;
+    --blue-dark:#1f4d78;
+    --red:#c1473a;
+    --red-dark:#8f3128;
+    --gold:#e3b34d;
+    --ink:#0e1a12;
+    --panel:#0d2116;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #234a2c 0%, var(--field-dark) 55%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 60px);
+    background-color: var(--field-dark);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color:var(--line);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 14px 60px;
+  }
+  h1,h2,h3,.display{
+    font-family: Impact, 'Arial Narrow Bold', sans-serif; font-weight:900; letter-spacing:1px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  .wrap{ width:100%; max-width:760px; }
+  @media (min-width:900px){
+    .wrap{ max-width:1180px; }
+  }
+
+  /* ---------- MARQUEE CREDIT ---------- */
+  .marquee-wrap{
+    width:100%;
+    overflow:hidden;
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(242,232,207,0.12);
+    border-radius:8px;
+    padding:6px 0;
+    margin-bottom:18px;
+    white-space:nowrap;
+  }
+  .marquee-track{
+    display:inline-block;
+    padding-left:100%;
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:700;
+    animation: marqueeScroll 14s linear infinite;
+  }
+  @keyframes marqueeScroll{
+    from{ transform: translateX(0); }
+    to{ transform: translateX(-100%); }
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    text-align:center;
+    margin-bottom:18px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:3px;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:clamp(32px,7vw,52px);
+    margin:0;
+    line-height:0.95;
+    color:var(--sand);
+    text-shadow: 0 3px 0 rgba(0,0,0,0.35);
+  }
+  .sub{
+    color:#a9c2ab;
+    font-size:14px;
+    margin-top:8px;
+  }
+
+  /* ---------- CARD ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid rgba(242,232,207,0.12);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.35);
+  }
+
+  /* ---------- SETUP SCREEN ---------- */
+  .setup-row{
+    display:flex;
+    gap:14px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .team-field{ flex:1; min-width:200px; }
+  .team-field label{
+    display:block;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .team-field.blue label{color:#8bb8e0;}
+  .team-field.red label{color:#e39a91;}
+  input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:2px solid rgba(242,232,207,0.15);
+    background:#0a1710;
+    color:var(--sand);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size:15px;
+    outline:none;
+  }
+  .team-field.blue input:focus{border-color:var(--blue);}
+  .team-field.red input:focus{border-color:var(--red);}
+
+  .topic-select{ margin-bottom:16px; }
+  .topic-select label{
+    display:block;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+    color:#a9c2ab;
+  }
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid rgba(242,232,207,0.25);
+    background:transparent;
+    color:var(--sand);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size:13px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .chip.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#20160a;
+    font-weight:600;
+  }
+
+  .btn{
+    display:inline-block;
+    width:100%;
+    padding:14px 18px;
+    border-radius:12px;
+    border:none;
+    font-family: Impact, 'Arial Narrow Bold', sans-serif; font-weight:900; letter-spacing:1px;
+    letter-spacing:1px;
+    font-size:18px;
+    text-transform:uppercase;
+    cursor:pointer;
+    background:var(--gold);
+    color:#20160a;
+    transition:transform .1s ease, filter .15s ease;
+  }
+  .btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0px); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+
+  /* ---------- ROPE FIELD ---------- */
+  .rope-stage{
+    position:relative;
+    margin: 6px 0 22px;
+    padding: 26px 46px 40px;
+  }
+  .puller{
+    position:absolute;
+    bottom:-20px;
+    width:58px;
+    height:96px;
+    transform-origin: 50% 100%;
+  }
+  .puller.blue-puller{ left:-18px; }
+  .puller.red-puller{ right:-18px; transform:scaleX(-1); }
+  .puller svg{ width:100%; height:100%; overflow:visible; }
+
+  .puller .rig{ transform-origin: 30px 96px; animation: strain 1.6s ease-in-out infinite; }
+  .puller.red-puller .rig{ animation-delay:.35s; }
+  @keyframes strain{
+    0%,100%{ transform: rotate(-4deg) translateY(0); }
+    50%{ transform: rotate(-9deg) translateY(-1.5px); }
+  }
+  .puller .dust{ opacity:0; transform-origin: 10px 93px; }
+  .puller.heave .dust{ animation: dustPuff .55s ease-out; }
+  @keyframes dustPuff{
+    0%{ opacity:0; transform: translate(0,0) scale(.5); }
+    25%{ opacity:.55; transform: translate(-3px,-1px) scale(1); }
+    100%{ opacity:0; transform: translate(-11px,-4px) scale(1.6); }
+  }
+
+  .puller .face-happy, .puller .face-sad{ display:none; }
+  .puller.happy .face-default{ display:none; }
+  .puller.happy .face-happy{ display:block; }
+  .puller.sad .face-default{ display:none; }
+  .puller.sad .face-sad{ display:block; }
+
+  .puller.heave .rig{ animation: heavePull .5s cubic-bezier(.3,1.6,.4,1); }
+  @keyframes heavePull{
+    0%{ transform: rotate(-6deg); }
+    40%{ transform: rotate(-26deg) translateY(-3px); }
+    70%{ transform: rotate(-14deg); }
+    100%{ transform: rotate(-6deg); }
+  }
+  .flags{
+    position:relative;
+    z-index:5;
+    display:flex;
+    justify-content:space-between;
+    font-family: Impact, 'Arial Narrow Bold', sans-serif; font-weight:900; letter-spacing:1px;
+    font-size:clamp(15px,3.6vw,20px);
+    margin-bottom:10px;
+  }
+  .flag-blue{ color:#8bb8e0; }
+  .flag-red{ color:#e39a91; text-align:right; }
+  .score-num{
+    display:block;
+    font-size:28px;
+    color:var(--sand);
+  }
+
+  .track{
+    position:relative;
+    height:64px;
+    border-radius:32px;
+    background:
+      linear-gradient(90deg, var(--blue-dark), var(--field-mid) 46%, var(--field-mid) 54%, var(--red-dark));
+    border:2px solid rgba(242,232,207,0.15);
+    overflow:visible;
+  }
+  .center-line{
+    position:absolute;
+    left:50%; top:0; bottom:0;
+    width:2px;
+    background:repeating-linear-gradient(180deg, var(--sand) 0 6px, transparent 6px 12px);
+    transform:translateX(-1px);
+    opacity:0.6;
+  }
+  .win-line{
+    position:absolute; top:6px; bottom:6px;
+    width:3px;
+    background:var(--gold);
+    opacity:0.55;
+    border-radius:2px;
+    z-index:2;
+  }
+  .win-line.left{ left:10%; }
+  .win-line.right{ right:10%; }
+
+  .rope-line{
+    position:absolute;
+    top:50%;
+    left:0;
+    right:0;
+    height:8px;
+    background: repeating-linear-gradient(90deg, #c8a15c 0 10px, #a9813f 10px 20px);
+    background-size: 20px 8px;
+    transform:translateY(-50%);
+    border-radius:4px;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.35);
+    animation: ropeTwist 0.7s linear infinite, ropeStrain 1.6s ease-in-out infinite;
+  }
+  @keyframes ropeTwist{
+    from{ background-position: 0 0; }
+    to{ background-position: -20px 0; }
+  }
+  @keyframes ropeStrain{
+    0%,100%{ transform: translateY(-50%) scaleY(1); }
+    50%{ transform: translateY(-50%) scaleY(1.35); }
+  }
+  .knot{
+    position:absolute;
+    top:50%;
+    width:46px;
+    height:46px;
+    margin-left:-23px;
+    margin-top:-23px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ffe1a3, var(--gold) 55%, #a97a1f 100%);
+    border:3px solid #7a5716;
+    transition: left .55s cubic-bezier(.4,1.4,.4,1);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.4);
+  }
+  .knot::before, .knot::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:16px;
+    height:8px;
+    background: repeating-linear-gradient(90deg, #c8a15c 0 10px, #a9813f 10px 20px);
+    transform: translateY(-50%);
+  }
+  .knot::before{ left:-14px; }
+  .knot::after{ right:-14px; }
+  .knot.shake{ animation: shake .4s ease; }
+  @keyframes shake{
+    0%,100%{ transform: translate(0,0) rotate(0); }
+    25%{ transform: translate(-4px,-2px) rotate(-6deg); }
+    75%{ transform: translate(4px,2px) rotate(6deg); }
+  }
+
+  .turn-banner{
+    text-align:center;
+    margin-bottom:12px;
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#a9c2ab;
+  }
+  .turn-banner b{ color:var(--gold); }
+  .turn-banner-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .turn-banner-row .turn-banner{ margin-bottom:0; }
+  .timer-chip{
+    font-family: Impact, 'Arial Narrow Bold', sans-serif; font-weight:900; letter-spacing:1px;
+    font-size:13px;
+    letter-spacing:1px;
+    color:#20160a;
+    background:var(--gold);
+    padding:3px 10px;
+    border-radius:999px;
+    min-width:30px;
+    text-align:center;
+    transition: background .2s ease, transform .15s ease;
+  }
+  .timer-chip.urgent{
+    background:var(--red);
+    color:var(--sand);
+    animation: timerPulse .5s ease infinite;
+  }
+  @keyframes timerPulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.12); }
+  }
+
+  /* ---------- QUESTION ---------- */
+  .q-topic{
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding:5px 10px;
+    border-radius:999px;
+    background:rgba(227,179,77,0.15);
+    color:var(--gold);
+    margin-bottom:12px;
+  }
+  .q-text{
+    font-size:19px;
+    line-height:1.4;
+    margin:0 0 18px;
+    color:var(--sand);
+  }
+  .options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  @media (max-width:480px){ .options{ grid-template-columns:1fr; } }
+  @media (min-width:900px){
+    .turn-banner-row, .q-topic, .q-text, .options, .feedback, #next-btn, .footer-row{
+      max-width:640px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+  }
+  .opt{
+    text-align:left;
+    padding:13px 14px;
+    border-radius:10px;
+    border:2px solid rgba(242,232,207,0.15);
+    background:#0a1710;
+    color:var(--sand);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size:14px;
+    cursor:pointer;
+    transition: all .12s ease;
+  }
+  .opt:hover:not(:disabled){ border-color:var(--gold); }
+  .opt:disabled{ cursor:default; }
+  .opt.correct{ background:rgba(90,168,110,0.25); border-color:#5aa86e; }
+  .opt.wrong{ background:rgba(193,71,58,0.25); border-color:var(--red); }
+
+  .feedback{
+    min-height:26px;
+    text-align:center;
+    font-size:14px;
+    margin:10px 0 4px;
+    font-weight:600;
+  }
+  .feedback.correct{ color:#7fd39a; }
+  .feedback.wrong{ color:#e79a90; }
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:16px;
+    font-size:12px;
+    color:#7f9683;
+  }
+  .link-btn{
+    background:none; border:none; color:#a9c2ab;
+    text-decoration:underline; cursor:pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:12px;
+  }
+
+  /* ---------- WIN SCREEN ---------- */
+  .win-screen{ text-align:center; }
+  .win-screen .trophy{ font-size:56px; margin-bottom:6px; }
+  .win-title{ font-size:clamp(28px,7vw,42px); margin:6px 0; }
+  .win-sub{ color:#a9c2ab; font-size:14px; margin-bottom:22px; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Chapter 1: Understanding Windows 10 · Chapter 2: Introduction to Word 2019</div>
+    <h1>Knowledge Tug of War</h1>
+    <div class="sub">Answer right, pull the rope. First knot off the field wins.</div>
+  </header>
+
+  <div class="marquee-wrap">
+    <div class="marquee-track">Hariom Darole's Creation &nbsp;★&nbsp; Hariom Darole's Creation &nbsp;★&nbsp; Hariom Darole's Creation &nbsp;★&nbsp; Hariom Darole's Creation &nbsp;★&nbsp; </div>
+  </div>
+
+
+  <!-- SETUP SCREEN -->
+  <div class="panel" id="setup-screen">
+    <div class="setup-row">
+      <div class="team-field blue">
+        <label>Team Blue name</label>
+        <input type="text" id="p1-name" placeholder="Player 1" maxlength="16">
+      </div>
+      <div class="team-field red">
+        <label>Team Red name</label>
+        <input type="text" id="p2-name" placeholder="Player 2" maxlength="16">
+      </div>
+    </div>
+
+    <div class="topic-select">
+      <label>Choose topics to include</label>
+      <div class="chip-row" id="topic-chips">
+        <button class="chip active" data-topic="windows10">Understanding Windows 10</button>
+        <button class="chip active" data-topic="word2019">Introduction to Word 2019</button>
+      </div>
+    </div>
+
+    <button class="btn" id="start-btn">Start the Pull</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="panel hidden" id="game-screen">
+    <div class="rope-stage">
+      <div class="flags">
+        <div class="flag-blue">🔵 <span id="blue-name">Team Blue</span><span class="score-num" id="blue-score">0</span></div>
+        <div class="flag-red">🔴 <span id="red-name">Team Red</span><span class="score-num" id="red-score">0</span></div>
+      </div>
+      <div class="track">
+        <div class="win-line left"></div>
+        <div class="win-line right"></div>
+        <div class="center-line"></div>
+        <div class="rope-line"></div>
+        <div class="knot" id="knot" style="left:50%;">🪢</div>
+
+        <div class="puller blue-puller" id="puller-blue">
+          <svg viewBox="0 0 60 100">
+            <g class="rig">
+              <!-- back leg, bent and driving into the ground -->
+              <path d="M27 58 Q16 68 12 88 Q11 93 17 94 Q21 95 22 90 L30 66 Z" fill="#1f3d55"/>
+              <ellipse cx="14" cy="92" rx="8" ry="4" fill="#0c1620"/>
+              <ellipse class="dust" cx="10" cy="93" rx="6" ry="3" fill="#c9d4c2"/>
+              <!-- front leg, braced -->
+              <path d="M33 60 Q42 70 44 90 Q45 95 39 95 Q35 95 34 90 L29 64 Z" fill="#2a5075"/>
+              <ellipse cx="43" cy="93" rx="8" ry="4" fill="#0c1620"/>
+              <!-- torso leaning back under load -->
+              <path d="M18 34 Q30 24 44 34 Q46 48 40 62 Q29 70 20 62 Q15 48 18 34 Z" fill="var(--blue)"/>
+              <path d="M22 36 Q30 30 40 36 Q40 46 36 56 Q29 61 23 56 Q19 46 22 36Z" fill="#3f7db0" opacity=".55"/>
+              <!-- lower arm, both hands gripping the rope -->
+              <path d="M21 45 Q33 48 42 53" stroke="var(--blue-dark)" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <!-- upper arm -->
+              <path d="M26 35 Q38 35 44 42" stroke="#3f7db0" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <!-- lower fist, wrapped around the rope -->
+              <ellipse cx="42" cy="52" rx="8.5" ry="6.5" fill="#c68f5f"/>
+              <ellipse cx="43.5" cy="48" rx="4.4" ry="2.7" fill="#c68f5f" transform="rotate(-25 43.5 48)"/>
+              <path d="M37.5 49.5 Q42 47.7 46.5 49.5" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <path d="M38 53.3 Q42 54.8 46 53.3" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <!-- upper fist, wrapped around the rope -->
+              <ellipse cx="45" cy="42" rx="8.5" ry="6.5" fill="#dba579"/>
+              <ellipse cx="46.5" cy="38" rx="4.4" ry="2.7" fill="#dba579" transform="rotate(-25 46.5 38)"/>
+              <path d="M40.5 39.5 Q45 37.7 49.5 39.5" stroke="#8a5a3a" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <path d="M41 43.3 Q45 44.8 49 43.3" stroke="#8a5a3a" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <!-- head -->
+              <circle cx="27" cy="20" r="11" fill="#dba579"/>
+              <path d="M16 17 Q27 4 39 15 Q33 10 27 11 Q19 11 16 17Z" fill="#2c1e12"/>
+              <!-- default effort face -->
+              <g class="face-default">
+                <path d="M19.5 17.2 L24.5 16" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.5 16 L34.5 17.2" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <circle cx="22.5" cy="19.8" r="1.7" fill="#241a10"/>
+                <circle cx="32" cy="19.8" r="1.7" fill="#241a10"/>
+                <circle cx="22.9" cy="19.4" r=".5" fill="#fff" opacity=".85"/>
+                <circle cx="32.4" cy="19.4" r=".5" fill="#fff" opacity=".85"/>
+                <path d="M20 24.5 Q27 26.5 34 24.5" stroke="#8a5a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <ellipse cx="17" cy="21" rx="2" ry="3" fill="#c98a5e" opacity=".7"/>
+              </g>
+              <!-- happy face: scored a point -->
+              <g class="face-happy">
+                <path d="M19.5 15.4 Q22 13.4 24.8 15" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.2 15 Q32 13.4 34.5 15.4" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M20.5 19 Q22.5 17.3 24.5 19" stroke="#241a10" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <path d="M29.5 19 Q31.5 17.3 33.5 19" stroke="#241a10" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <path d="M19.5 23.5 Q27 30.5 34.5 23.5" stroke="#8a5a3a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                <ellipse cx="17" cy="22" rx="2.6" ry="3.3" fill="#e0895e" opacity=".65"/>
+                <ellipse cx="37.5" cy="22" rx="2.6" ry="3.3" fill="#e0895e" opacity=".65"/>
+              </g>
+              <!-- sad face: lost the pull -->
+              <g class="face-sad">
+                <path d="M19.5 16 Q22 17.8 24.8 16.8" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.2 16.8 Q32 17.8 34.5 16" stroke="#2c1e12" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <circle cx="22.5" cy="20.3" r="1.5" fill="#241a10"/>
+                <circle cx="32" cy="20.3" r="1.5" fill="#241a10"/>
+                <path d="M20 27 Q27 22.8 34 27" stroke="#8a5a3a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="puller red-puller" id="puller-red">
+          <svg viewBox="0 0 60 100">
+            <g class="rig">
+              <path d="M27 58 Q16 68 12 88 Q11 93 17 94 Q21 95 22 90 L30 66 Z" fill="#5a2620"/>
+              <ellipse cx="14" cy="92" rx="8" ry="4" fill="#22100d"/>
+              <ellipse class="dust" cx="10" cy="93" rx="6" ry="3" fill="#c9d4c2"/>
+              <path d="M33 60 Q42 70 44 90 Q45 95 39 95 Q35 95 34 90 L29 64 Z" fill="#7a352b"/>
+              <ellipse cx="43" cy="93" rx="8" ry="4" fill="#22100d"/>
+              <path d="M18 34 Q30 24 44 34 Q46 48 40 62 Q29 70 20 62 Q15 48 18 34 Z" fill="var(--red)"/>
+              <path d="M22 36 Q30 30 40 36 Q40 46 36 56 Q29 61 23 56 Q19 46 22 36Z" fill="#d97a6c" opacity=".5"/>
+              <!-- lower arm, both hands gripping the rope -->
+              <path d="M21 45 Q33 48 42 53" stroke="var(--red-dark)" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <!-- upper arm -->
+              <path d="M26 35 Q38 35 44 42" stroke="#d97a6c" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <!-- lower fist, wrapped around the rope -->
+              <ellipse cx="42" cy="52" rx="8.5" ry="6.5" fill="#b97650"/>
+              <ellipse cx="43.5" cy="48" rx="4.4" ry="2.7" fill="#b97650" transform="rotate(-25 43.5 48)"/>
+              <path d="M37.5 49.5 Q42 47.7 46.5 49.5" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <path d="M38 53.3 Q42 54.8 46 53.3" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <!-- upper fist, wrapped around the rope -->
+              <ellipse cx="45" cy="42" rx="8.5" ry="6.5" fill="#c98a5e"/>
+              <ellipse cx="46.5" cy="38" rx="4.4" ry="2.7" fill="#c98a5e" transform="rotate(-25 46.5 38)"/>
+              <path d="M40.5 39.5 Q45 37.7 49.5 39.5" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <path d="M41 43.3 Q45 44.8 49 43.3" stroke="#7a4a30" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <circle cx="27" cy="20" r="11" fill="#c98a5e"/>
+              <path d="M16 17 Q27 4 39 15 Q33 10 27 11 Q19 11 16 17Z" fill="#1c1410"/>
+              <!-- default effort face -->
+              <g class="face-default">
+                <path d="M19.5 17.2 L24.5 16" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.5 16 L34.5 17.2" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <circle cx="22.5" cy="19.8" r="1.7" fill="#241009"/>
+                <circle cx="32" cy="19.8" r="1.7" fill="#241009"/>
+                <circle cx="22.9" cy="19.4" r=".5" fill="#fff" opacity=".85"/>
+                <circle cx="32.4" cy="19.4" r=".5" fill="#fff" opacity=".85"/>
+                <path d="M20 24.5 Q27 26.5 34 24.5" stroke="#7a4a30" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              </g>
+              <!-- happy face: scored a point -->
+              <g class="face-happy">
+                <path d="M19.5 15.4 Q22 13.4 24.8 15" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.2 15 Q32 13.4 34.5 15.4" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M20.5 19 Q22.5 17.3 24.5 19" stroke="#241009" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <path d="M29.5 19 Q31.5 17.3 33.5 19" stroke="#241009" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <path d="M19.5 23.5 Q27 30.5 34.5 23.5" stroke="#7a4a30" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+                <ellipse cx="17" cy="22" rx="2.6" ry="3.3" fill="#d97a5e" opacity=".6"/>
+                <ellipse cx="37.5" cy="22" rx="2.6" ry="3.3" fill="#d97a5e" opacity=".6"/>
+              </g>
+              <!-- sad face: lost the pull -->
+              <g class="face-sad">
+                <path d="M19.5 16 Q22 17.8 24.8 16.8" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <path d="M29.2 16.8 Q32 17.8 34.5 16" stroke="#1c1410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                <circle cx="22.5" cy="20.3" r="1.5" fill="#241009"/>
+                <circle cx="32" cy="20.3" r="1.5" fill="#241009"/>
+                <path d="M20 27 Q27 22.8 34 27" stroke="#7a4a30" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="turn-banner-row">
+      <div class="turn-banner">It's <b id="turn-name">Team Blue</b>'s turn to pull</div>
+      <div class="timer-chip" id="timer-chip">10s</div>
+    </div>
+
+    <div class="q-topic" id="q-topic-badge">Understanding Windows 10</div>
+    <p class="q-text" id="q-text">Question goes here</p>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+
+    <button class="btn hidden" id="next-btn">Next Question →</button>
+
+    <div class="footer-row">
+      <span id="progress-label">Question 1</span>
+      <button class="link-btn" id="restart-link">Restart game</button>
+    </div>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div class="panel hidden win-screen" id="win-screen">
+    <div class="trophy">🏆</div>
+    <h2 class="win-title" id="win-title">Team Blue wins!</h2>
+    <div class="win-sub" id="win-sub">Pulled the rope clean off the field.</div>
+    <button class="btn" id="play-again-btn">Play Again</button>
+  </div>
+</div>
+
+<script>
+const QUESTION_BANK = {
+  windows10: [
+    {q:"Windows 10 is an example of a/an:", opts:["Application software","Operating system","Hardware device","Programming language"], a:1},
+    {q:"Windows 10 was developed and released by which company?", opts:["Apple","Microsoft","Google","IBM"], a:1},
+    {q:"Which feature lets you switch between multiple virtual desktops in Windows 10?", opts:["Task View","Notepad","Control Panel","Recycle Bin"], a:0},
+    {q:"The Windows 10 feature that lets you search files, apps, and the web from one place is:", opts:["Cortana search box","Command Prompt","File Explorer Ribbon","BIOS"], a:0},
+    {q:"Which of the following is NOT an operating system?", opts:["Windows 10","Linux","MS Word","macOS"], a:2},
+    {q:"The Start Menu in Windows 10 combines features of:", opts:["Windows 7 Start Menu and Windows 8 Start Screen","Only MS-DOS","Only Control Panel","Only Taskbar"], a:0},
+    {q:"Which of these is a virtual assistant feature introduced with Windows 10?", opts:["Cortana","Paint","WordPad","Calculator"], a:0},
+    {q:"The first screen that appears after Windows starts up is called the:", opts:["Desktop","Taskbar","Ribbon","Status bar"], a:0},
+    {q:"Small pictures on the Desktop that represent programs or files are called:", opts:["Icons","Widgets","Tiles only","Cursors"], a:0},
+    {q:"The bar at the bottom of the Desktop showing open programs and the Start button is the:", opts:["Taskbar","Sidebar","Menu bar","Ribbon"], a:0},
+    {q:"Which icon usually appears on the Desktop to store deleted files?", opts:["Recycle Bin","My Computer","Control Panel","Notepad"], a:0},
+    {q:"To change the Desktop background, you right-click the Desktop and choose:", opts:["Personalize","Format","Print","Save As"], a:0},
+    {q:"The area on the taskbar showing date, time, and small status icons is called the:", opts:["System Tray (Notification area)","Ribbon","Ruler","Ribbon Bar"], a:0},
+    {q:"Which of these can be pinned to the Taskbar for quick access?", opts:["An app shortcut","A cell reference","A row header","A formula"], a:0},
+    {q:"Universal apps in Windows 10 are designed to run on:", opts:["Only desktop computers","Multiple devices like PC, tablet, and phone","Only Windows 7","Only printers"], a:1},
+    {q:"Which of these is a Universal App that comes pre-installed with Windows 10?", opts:["MS-DOS","Mail","Turbo C","BASIC"], a:1},
+    {q:"The Microsoft Store on Windows 10 is mainly used to:", opts:["Download and install apps","Delete files permanently","Format the hard disk","Change the CPU speed"], a:0},
+    {q:"Which Universal App is used for taking and viewing photos on Windows 10?", opts:["Photos app","Notepad","Calculator","Command Prompt"], a:0},
+    {q:"Universal Windows Platform (UWP) apps run inside a window frame that is:", opts:["Consistent across different devices","Only available on old MS-DOS systems","Only usable in Command Prompt","Never resizable"], a:0},
+    {q:"Which of the following is a built-in Universal App for checking weather updates?", opts:["Weather app","Excel","Word","PowerPoint"], a:0},
+    {q:"Working with more than one window open on screen at the same time is called:", opts:["Multitasking","Formatting","Booting","Debugging"], a:0},
+    {q:"Which key combination helps you switch between open windows?", opts:["Alt+Tab","Ctrl+P","Shift+Delete","Ctrl+S"], a:0},
+    {q:"Dragging a window to the side of the screen so it fills exactly half the screen is called:", opts:["Snap","Format","Merge","Print"], a:0},
+    {q:"To minimize all open windows at once, you can click the:", opts:["Show Desktop button","Recycle Bin","Start button only","Ribbon"], a:0},
+    {q:"Which button on a window closes it completely?", opts:["Close (X) button","Minimize button","Maximize button","Restore button"], a:0},
+    {q:"The button used to enlarge a window to fill the whole screen is the:", opts:["Maximize button","Minimize button","Close button","Snap button"], a:0},
+    {q:"The default app used to view pictures in Windows 10 is the:", opts:["Photos app","Notepad","Command Prompt","Calculator"], a:0},
+    {q:"Pictures copied from a camera to a computer are usually saved by default in the folder named:", opts:["Pictures","System32","Downloads only","Program Files"], a:0},
+    {q:"Common picture file formats include:", opts:["JPG and PNG","DOCX and PPTX","EXE and BAT","MP3 and WAV"], a:0},
+    {q:"In the Photos app, which option lets you turn an image sideways?", opts:["Rotate","Print","Save As","Undo"], a:0},
+    {q:"Zooming in on a picture in the Photos app is usually done with the:", opts:["Plus (+) icon or scroll","Delete key","Tab key","Enter key"], a:0},
+    {q:"To set a picture as your Desktop background, you right-click the image and choose:", opts:["Set as desktop background","Delete","Rename","Compress"], a:0},
+    {q:"Which generation of computers used vacuum tubes?", opts:["First generation","Second generation","Third generation","Fourth generation"], a:0},
+    {q:"Transistors were used mainly in which generation of computers?", opts:["First generation","Second generation","Third generation","Fourth generation"], a:1},
+    {q:"Integrated Circuits (ICs) were introduced in which generation of computers?", opts:["First generation","Second generation","Third generation","Fourth generation"], a:2},
+    {q:"Microprocessors are associated with which generation of computers?", opts:["First generation","Second generation","Third generation","Fourth generation"], a:3},
+    {q:"The fifth generation of computers is mainly based on:", opts:["Vacuum tubes","Transistors","Artificial Intelligence","Punch cards"], a:2},
+    {q:"ENIAC, one of the earliest electronic computers, belonged to which generation?", opts:["First generation","Third generation","Fifth generation","None of these"], a:0},
+    {q:"Which device was commonly used for input/output in very early computers?", opts:["Punch cards","Touch screen","Wi-Fi router","USB drive"], a:0},
+    {q:"Computers became much smaller and faster mainly because of the invention of the:", opts:["Microprocessor","Typewriter","Telephone","Abacus"], a:0},
+    {q:"The earliest calculating device used by humans is considered to be the:", opts:["Abacus","Laptop","Smartphone","Printer"], a:0}
+  ],
+  word2019: [
+    {q:"To start MS Word 2019 from the Start Menu, you click:", opts:["Start > Word","Start > Paint","Start > Calculator","Start > Recycle Bin"], a:0},
+    {q:"MS Word 2019 belongs to which suite of applications?", opts:["Microsoft Office","Adobe Creative Suite","Google Workspace","Linux Utilities"], a:0},
+    {q:"Which file extension is used for a Word 2019 document by default?", opts:[".docx",".xlsx",".pptx",".txt"], a:0},
+    {q:"The bar at the very top of the Word window showing the document's name is the:", opts:["Title Bar","Status Bar","Ribbon","Ruler"], a:0},
+    {q:"The area where you type and edit text in a Word document is called the:", opts:["Document area (workspace)","Ribbon","Quick Access Toolbar","Status Bar"], a:0},
+    {q:"The collection of tabs and commands at the top of the Word window is called the:", opts:["Ribbon","Title Bar","Scroll Bar","Status Bar"], a:0},
+    {q:"The bar at the bottom of the Word window showing page number and word count is the:", opts:["Status Bar","Ribbon","Title Bar","Menu Bar"], a:0},
+    {q:"To create a new blank document in Word 2019, you go to:", opts:["File > New","File > Print","File > Close","File > Exit"], a:0},
+    {q:"Which keyboard shortcut creates a new blank document in Word?", opts:["Ctrl+N","Ctrl+O","Ctrl+S","Ctrl+P"], a:0},
+    {q:"When Word opens a brand-new document, the default template used is called:", opts:["Blank document","Resume template","Letter template","Report template"], a:0},
+    {q:"The blinking vertical line showing where typed text will appear is called the:", opts:["Insertion point (cursor)","Ribbon","Scroll bar","Status bar"], a:0},
+    {q:"Pressing which key moves the cursor to a new paragraph/line while typing?", opts:["Enter","Shift","Ctrl","Tab"], a:0},
+    {q:"Which key is used to insert a tab space while entering text?", opts:["Tab","Enter","Shift","Ctrl"], a:0},
+    {q:"To select an entire word by clicking, you:", opts:["Double-click on it","Right-click on it","Triple-click on it","Press Delete"], a:0},
+    {q:"To select an entire paragraph quickly, you:", opts:["Triple-click within it","Single click on it","Right-click only","Press Tab"], a:0},
+    {q:"Which keyboard shortcut selects the entire document?", opts:["Ctrl+A","Ctrl+S","Ctrl+P","Ctrl+N"], a:0},
+    {q:"Moving text removes it from one place in a document and places it:", opts:["In another location","Nowhere, it is deleted","Only in the Recycle Bin","Only on paper"], a:0},
+    {q:"Which shortcut is used to Cut selected text?", opts:["Ctrl+X","Ctrl+C","Ctrl+V","Ctrl+Z"], a:0},
+    {q:"After cutting text, which shortcut places it in a new location?", opts:["Ctrl+V (Paste)","Ctrl+X","Ctrl+C","Ctrl+S"], a:0},
+    {q:"Copying text keeps the original text in place and:", opts:["Also creates a duplicate elsewhere","Deletes the original","Moves it to the Recycle Bin","Converts it to an image"], a:0},
+    {q:"Which shortcut copies selected text?", opts:["Ctrl+C","Ctrl+X","Ctrl+V","Ctrl+Z"], a:0},
+    {q:"The temporary storage area used when you copy or cut text is called the:", opts:["Clipboard","Ribbon","Status bar","Title bar"], a:0},
+    {q:"Which key deletes the character to the left of the cursor?", opts:["Backspace","Delete","Enter","Tab"], a:0},
+    {q:"Which key deletes the character to the right of the cursor?", opts:["Delete","Backspace","Shift","Ctrl"], a:0},
+    {q:"To delete a selected block of text in one step, you can press the:", opts:["Delete key","Print Screen key","Caps Lock key","Num Lock key"], a:0},
+    {q:"Which shortcut Undoes the last action in Word?", opts:["Ctrl+Z","Ctrl+Y","Ctrl+X","Ctrl+V"], a:0},
+    {q:"Which shortcut Redoes an action that was just undone?", opts:["Ctrl+Y","Ctrl+Z","Ctrl+A","Ctrl+N"], a:0},
+    {q:"Word underlines misspelled words with a:", opts:["Red wavy line","Blue straight line","Green dotted circle","Black box"], a:0},
+    {q:"Grammar mistakes in a Word document are usually underlined with a:", opts:["Blue wavy line","Red wavy line","Yellow highlight","No indication"], a:0},
+    {q:"Which Ribbon tab contains the Spelling & Grammar command?", opts:["Review","Insert","Design","View"], a:0},
+    {q:"The Thesaurus tool in Word is mainly used to find:", opts:["Synonyms and antonyms of a word","Spelling mistakes only","Page numbers","Font styles"], a:0},
+    {q:"The Thesaurus option is found under which Ribbon tab?", opts:["Review","Home","Insert","Layout"], a:0},
+    {q:"Which shortcut saves the current document?", opts:["Ctrl+S","Ctrl+O","Ctrl+P","Ctrl+N"], a:0},
+    {q:"'Save As' is used when you want to:", opts:["Save a document with a new name or location","Print the document","Close the document","Undo changes"], a:0},
+    {q:"Which file format keeps a Word document compatible with older Word 2003-style software?", opts:[".doc",".docx",".pptx",".xlsx"], a:0},
+    {q:"To close the Word application completely, you can click:", opts:["The Close (X) button on the title bar","The Minimize button","The Maximize button","The Ribbon"], a:0},
+    {q:"If you try to close a document without saving changes, Word will:", opts:["Prompt you to save changes","Automatically delete the file","Automatically print the file","Do nothing at all"], a:0},
+    {q:"Which shortcut is used to open an existing document?", opts:["Ctrl+O","Ctrl+N","Ctrl+S","Ctrl+P"], a:0},
+    {q:"To quickly open a recently used document, you can check:", opts:["File > Open > Recent","File > Print","File > Exit","Insert tab"], a:0},
+    {q:"Double-clicking a .docx file icon in File Explorer will normally:", opts:["Open it in Word","Delete it","Print it automatically","Rename it"], a:0},
+    {q:"Which shortcut is commonly used to print the current document?", opts:["Ctrl+P","Ctrl+S","Ctrl+O","Ctrl+N"], a:0}
+  ]
+};
+
+const state = {
+  players:{blue:"Team Blue", red:"Team Red"},
+  topics:["windows10","word2019"],
+  queue:[],
+  qIndex:0,
+  position:5, // 0..10, 0 = red wins, 10 = blue wins
+  turn:"blue",
+  answered:false,
+  timeLeft:10,
+  timerInterval:null
+};
+
+const topicLabels = { windows10:"Understanding Windows 10", word2019:"Introduction to Word 2019" };
+
+const setupScreen = document.getElementById('setup-screen');
+const gameScreen = document.getElementById('game-screen');
+const winScreen = document.getElementById('win-screen');
+
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    chip.classList.toggle('active');
+  });
+});
+
+document.getElementById('start-btn').addEventListener('click', ()=>{
+  const p1 = document.getElementById('p1-name').value.trim();
+  const p2 = document.getElementById('p2-name').value.trim();
+  state.players.blue = p1 || "Team Blue";
+  state.players.red = p2 || "Team Red";
+
+  const activeChips = Array.from(document.querySelectorAll('.chip.active')).map(c=>c.dataset.topic);
+  state.topics = activeChips.length ? activeChips : ["windows10","word2019"];
+
+  buildQueue();
+  document.getElementById('blue-name').textContent = state.players.blue;
+  document.getElementById('red-name').textContent = state.players.red;
+
+  setupScreen.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
+  winScreen.classList.add('hidden');
+
+  state.position = 5;
+  state.turn = "blue";
+  state.qIndex = 0;
+  updateTrack();
+  renderQuestion();
+});
+
+function buildQueue(){
+  let pool = [];
+  state.topics.forEach(t=>{
+    QUESTION_BANK[t].forEach(item=> pool.push({...item, topic:t}));
+  });
+  // shuffle
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  state.queue = pool;
+}
+
+function updateTrack(){
+  const pct = state.position * 10;
+  const knot = document.getElementById('knot');
+  knot.style.left = pct + '%';
+  document.getElementById('blue-score').textContent = 10 - state.position;
+  document.getElementById('red-score').textContent = state.position;
+  document.getElementById('turn-name').textContent = state.turn === 'blue' ? state.players.blue : state.players.red;
+}
+
+function renderQuestion(){
+  state.answered = false;
+  document.getElementById('next-btn').classList.add('hidden');
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('puller-blue').classList.remove('happy','sad');
+  document.getElementById('puller-red').classList.remove('happy','sad');
+
+  if(state.qIndex >= state.queue.length){
+    endGameByQuestions();
+    return;
+  }
+  const item = state.queue[state.qIndex];
+  document.getElementById('q-topic-badge').textContent = topicLabels[item.topic];
+  document.getElementById('q-text').textContent = item.q;
+  document.getElementById('progress-label').textContent = `Question ${state.qIndex+1} of ${state.queue.length}`;
+
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  item.opts.forEach((opt, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt;
+    btn.addEventListener('click', ()=> handleAnswer(idx, item));
+    optionsDiv.appendChild(btn);
+  });
+
+  updateTrack();
+  startTimer();
+}
+
+function startTimer(){
+  stopTimer();
+  state.timeLeft = 10;
+  const chip = document.getElementById('timer-chip');
+  chip.textContent = state.timeLeft + 's';
+  chip.classList.remove('urgent');
+  state.timerInterval = setInterval(()=>{
+    state.timeLeft -= 1;
+    chip.textContent = Math.max(state.timeLeft,0) + 's';
+    if(state.timeLeft <= 3){ chip.classList.add('urgent'); }
+    if(state.timeLeft <= 0){
+      stopTimer();
+      handleTimeout();
+    }
+  }, 1000);
+}
+
+function stopTimer(){
+  if(state.timerInterval){
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+}
+
+function handleTimeout(){
+  if(state.answered) return;
+  state.answered = true;
+  const item = state.queue[state.qIndex];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach((b, i)=>{
+    b.disabled = true;
+    if(i === item.a) b.classList.add('correct');
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.textContent = `Time's up! No pull this round.`;
+  fb.classList.add('wrong');
+
+  const selfFace = document.getElementById(state.turn === 'blue' ? 'puller-blue' : 'puller-red');
+  selfFace.classList.remove('happy');
+  selfFace.classList.add('sad');
+
+  setTimeout(()=>{
+    state.qIndex += 1;
+    state.turn = state.turn === 'blue' ? 'red' : 'blue';
+    renderQuestion();
+  }, 1400);
+}
+
+function handleAnswer(idx, item){
+  if(state.answered) return;
+  state.answered = true;
+  stopTimer();
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach((b, i)=>{
+    b.disabled = true;
+    if(i === item.a) b.classList.add('correct');
+    if(i === idx && idx !== item.a) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback');
+  const puller = state.turn === 'blue' ? state.players.blue : state.players.red;
+  const selfFace = document.getElementById(state.turn === 'blue' ? 'puller-blue' : 'puller-red');
+  const opponentFace = document.getElementById(state.turn === 'blue' ? 'puller-red' : 'puller-blue');
+
+  if(idx === item.a){
+    fb.textContent = `Correct! ${puller} pulls the rope.`;
+    fb.classList.add('correct');
+    movePosition(state.turn === 'blue' ? -1 : 1);
+    selfFace.classList.remove('sad');
+    selfFace.classList.add('happy');
+    opponentFace.classList.remove('happy');
+    opponentFace.classList.add('sad');
+  } else {
+    fb.textContent = `Not quite — the correct answer is highlighted. ${puller} loses a point!`;
+    fb.classList.add('wrong');
+    movePosition(state.turn === 'blue' ? 1 : -1);
+    selfFace.classList.remove('happy');
+    selfFace.classList.add('sad');
+    opponentFace.classList.remove('sad');
+    opponentFace.classList.add('happy');
+  }
+
+  const knot = document.getElementById('knot');
+  knot.classList.remove('shake');
+  void knot.offsetWidth;
+  knot.classList.add('shake');
+
+  {
+    const heavingId = (idx === item.a) === (state.turn === 'blue') ? 'puller-blue' : 'puller-red';
+    const pullerEl = document.getElementById(heavingId);
+    pullerEl.classList.remove('heave');
+    void pullerEl.offsetWidth;
+    pullerEl.classList.add('heave');
+    setTimeout(()=> pullerEl.classList.remove('heave'), 550);
+  }
+
+  if(state.position <= 1 || state.position >= 9){
+    setTimeout(()=> finishGame(state.position <= 1 ? 'blue' : 'red', 'pull'), 700);
+    return;
+  }
+
+  setTimeout(()=>{
+    state.qIndex += 1;
+    state.turn = state.turn === 'blue' ? 'red' : 'blue';
+    renderQuestion();
+  }, 1400);
+}
+
+function movePosition(dir){
+  state.position = Math.min(10, Math.max(0, state.position + dir));
+  updateTrack();
+}
+
+document.getElementById('next-btn').addEventListener('click', ()=>{
+  state.qIndex += 1;
+  state.turn = state.turn === 'blue' ? 'red' : 'blue';
+  renderQuestion();
+});
+
+function endGameByQuestions(){
+  if(state.position > 5) finishGame('blue','score');
+  else if(state.position < 5) finishGame('red','score');
+  else finishGame('tie','score');
+}
+
+function finishGame(winner, reason){
+  stopTimer();
+  gameScreen.classList.add('hidden');
+  winScreen.classList.remove('hidden');
+  const title = document.getElementById('win-title');
+  const sub = document.getElementById('win-sub');
+
+  if(winner === 'tie'){
+    title.textContent = "It's a dead heat!";
+    sub.textContent = "The rope stayed right in the middle. Play again for a decider.";
+  } else {
+    const name = winner === 'blue' ? state.players.blue : state.players.red;
+    title.textContent = `${name} wins!`;
+    sub.textContent = reason === 'pull'
+      ? "Pulled the knot clean off the field."
+      : "Held more ground when the questions ran out.";
+  }
+}
+
+document.getElementById('play-again-btn').addEventListener('click', resetToSetup);
+document.getElementById('restart-link').addEventListener('click', resetToSetup);
+
+function resetToSetup(){
+  stopTimer();
+  gameScreen.classList.add('hidden');
+  winScreen.classList.add('hidden');
+  setupScreen.classList.remove('hidden');
+}
+</script>
+</body>
+</html>
